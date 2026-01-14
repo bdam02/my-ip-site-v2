@@ -34,7 +34,7 @@
     }
 
     .ip {
-      font-size: 2.5rem;
+      font-size: 2.6rem;
       font-weight: bold;
       color: #00ffcc;
       margin-bottom: 20px;
@@ -82,15 +82,21 @@
   <script>
     async function loadIP() {
       try {
-        // Get IP
+        // 1️⃣ Get IP (very reliable)
         const ipRes = await fetch("https://api.ipify.org?format=json");
         const ipData = await ipRes.json();
         document.getElementById("ip").textContent = ipData.ip;
 
-        // Get location
+        // 2️⃣ Get location (may fail sometimes, that's OK)
         const locRes = await fetch("https://ipwho.is/");
         const locData = await locRes.json();
-        if (!locData.success) throw new Error("Location failed");
+
+        if (!locData.success) {
+          document.getElementById("location").textContent =
+            "Location unavailable";
+          document.getElementById("country").textContent = "";
+          return;
+        }
 
         document.getElementById("location").textContent =
           "City: " + locData.city + " | Region: " + locData.region;
@@ -98,7 +104,7 @@
         document.getElementById("country").textContent =
           "Country: " + locData.country;
 
-        // Mini map
+        // 3️⃣ Mini map
         const map = L.map("map").setView(
           [locData.latitude, locData.longitude],
           10
@@ -113,8 +119,8 @@
           .bindPopup("📍 Approximate location")
           .openPopup();
 
-      } catch (e) {
-        document.getElementById("ip").textContent = "Loading error";
+      } catch (err) {
+        document.getElementById("ip").textContent = "Unable to load IP";
       }
     }
 
@@ -123,4 +129,5 @@
 
 </body>
 </html>
+
 

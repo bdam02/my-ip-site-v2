@@ -1,18 +1,126 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Mon IP</title>
+  <meta charset="UTF-8" />
+  <title>My IP Information</title>
+
+  <!-- Leaflet (mini map) -->
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  />
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #0f0f0f, #1a1a1a);
+      color: white;
+    }
+
+    .container {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 40px;
+    }
+
+    h1 {
+      font-size: 3rem;
+      margin-bottom: 10px;
+    }
+
+    .ip {
+      font-size: 2.5rem;
+      font-weight: bold;
+      color: #00ffcc;
+      margin-bottom: 20px;
+    }
+
+    .info {
+      font-size: 1.2rem;
+      opacity: 0.9;
+      margin-bottom: 8px;
+    }
+
+    #map {
+      width: 90%;
+      max-width: 700px;
+      height: 350px;
+      margin-top: 40px;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 0 25px rgba(0,255,200,0.3);
+    }
+
+    .scroll {
+      margin-top: 20px;
+      font-size: 0.9rem;
+      opacity: 0.6;
+    }
+  </style>
 </head>
 <body>
-  <h1>🌐 Ton IP publique</h1>
-  <p id="ip">Chargement...</p>
+
+  <div class="container">
+    <h1>🌐 Your Public IP</h1>
+    <div class="ip" id="ip">Loading...</div>
+
+    <div class="info" id="location"></div>
+    <div class="info" id="country"></div>
+
+    <div id="map"></div>
+    <div class="scroll">⬇ Scroll to view the map</div>
+  </div>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <script>
-    fetch("https://api.ipify.org?format=json")
-      .then(res => res.json())
-      .then(data => {
-        document.getElementById("ip").textContent = data.ip;
-      });
+    async function loadIP() {
+      try {
+        // Get IP
+        const ipRes = await fetch("https://api.ipify.org?format=json");
+        const ipData = await ipRes.json();
+        document.getElementById("ip").textContent = ipData.ip;
+
+        // Get location
+        const locRes = await fetch("https://ipwho.is/");
+        const locData = await locRes.json();
+        if (!locData.success) throw new Error("Location failed");
+
+        document.getElementById("location").textContent =
+          "City: " + locData.city + " | Region: " + locData.region;
+
+        document.getElementById("country").textContent =
+          "Country: " + locData.country;
+
+        // Mini map
+        const map = L.map("map").setView(
+          [locData.latitude, locData.longitude],
+          10
+        );
+
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+          attribution: "© OpenStreetMap"
+        }).addTo(map);
+
+        L.marker([locData.latitude, locData.longitude])
+          .addTo(map)
+          .bindPopup("📍 Approximate location")
+          .openPopup();
+
+      } catch (e) {
+        document.getElementById("ip").textContent = "Loading error";
+      }
+    }
+
+    loadIP();
   </script>
+
 </body>
 </html>
+
